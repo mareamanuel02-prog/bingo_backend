@@ -5,9 +5,8 @@
   "main": "dist/engine.js",
   "type": "module",
   "scripts": {
-    "start": "node dist/engine.js",
-    "dev": "tsx watch engine.ts",
-    "build": "tsc"
+    "start": "tsx engine.ts",
+    "dev": "tsx watch engine.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
