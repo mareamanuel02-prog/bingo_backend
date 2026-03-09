@@ -105,7 +105,7 @@ async function processPlayingRoom(room: any) {
         return;
     }
 
-    const calledArray = calledNumbers?.map(n => n.number) || [];
+    const calledArray = calledNumbers?.map((n: { number: number }) => n.number) || [];
 
     // 2. Check if the game has exhausted all 75 numbers
     if (calledArray.length >= 75) {

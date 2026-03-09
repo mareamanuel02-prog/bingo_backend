@@ -88,7 +88,7 @@ async function processPlayingRoom(room) {
         console.error(`Error fetching calls for ${room.id}:`, callErr.message);
         return;
     }
-    const calledArray = calledNumbers?.map(n => n.number) || [];
+    const calledArray = calledNumbers?.map((n) => n.number) || [];
     // 2. Check if the game has exhausted all 75 numbers
     if (calledArray.length >= 75) {
         console.log(`Room ${room.id} exhausted all numbers. Closing room.`);
