@@ -2,18 +2,19 @@
   "name": "bingo-engine",
   "version": "1.0.0",
   "type": "module",
- "scripts": {
-  "build": "tsc",
-  "start": "node dist/engine.js",
-  "dev": "tsc --watch"
-},
+  "scripts": {
+    "build": "npx esbuild engine.ts --bundle --platform=node --format=esm --outfile=dist/engine.js",
+    "start": "node dist/engine.js",
+    "dev": "npx tsx watch engine.ts"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "dotenv": "^16.4.5",
-    "tsx": "^4.7.1",
-    "typescript": "^5.3.3",
-    "@types/node": "^25.3.5",
     "esbuild": "^0.20.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3",
+    "@types/node": "^25.3.5"
+  }
 }
