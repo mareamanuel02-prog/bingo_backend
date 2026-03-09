@@ -1,8 +1,8 @@
 {
   "name": "bingo-engine",
   "version": "1.0.0",
-  "description": "24/7 Central Game Orchestration",
   "main": "dist/engine.js",
+  "type": "module",
   "scripts": {
     "start": "node dist/engine.js",
     "dev": "tsx watch engine.ts",

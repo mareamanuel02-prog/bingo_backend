@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "NodeNext",           // ✅ must match moduleResolution
+    "moduleResolution": "NodeNext", // ✅ NodeNext resolution for ESM packages
     "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
