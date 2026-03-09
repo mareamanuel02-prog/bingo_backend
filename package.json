@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "echo 'Using pre-built bundle'",
+    "build": "npx esbuild engine.ts --bundle --platform=node --format=esm --external:http --external:https --external:crypto --external:fs --outfile=dist/engine.js",
     "start": "node dist/engine.js",
     "dev": "npx tsx watch engine.ts"
   },
