@@ -5,13 +5,14 @@
   "main": "dist/engine.js",
   "type": "module",
   "scripts": {
-    "start": "npx tsx engine.ts",
+    "start": "node dist/engine.js",
     "dev": "tsx watch engine.ts",
-    "build": "echo 'Build not required for TSX direct execution'"
+    "build": "esbuild engine.ts --bundle --platform=node --format=esm --outfile=dist/engine.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "dotenv": "^16.4.5",
+    "esbuild": "^0.20.1",
     "tsx": "^4.7.1",
     "typescript": "^5.3.3"
   },
