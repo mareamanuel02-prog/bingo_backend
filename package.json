@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "tsx engine.ts",
-    "dev": "tsx watch engine.ts"
+    "dev": "tsx watch engine.ts",
+    "build": "echo 'Build not required for TSX direct execution'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
