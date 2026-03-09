@@ -1,10 +1,9 @@
 {
   "name": "bingo-engine",
   "version": "1.0.0",
-  "main": "dist/engine.js",
   "type": "module",
   "scripts": {
-    "start": "node dist/engine.js",
+    "start": "tsx engine.ts",
     "dev": "tsx watch engine.ts",
     "build": "tsc"
   },
