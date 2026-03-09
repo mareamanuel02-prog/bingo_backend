@@ -2,11 +2,11 @@
   "name": "bingo-engine",
   "version": "1.0.0",
   "type": "module",
- "scripts": {
-  "start": "npx tsx engine.ts",
-  "dev": "npx tsx watch engine.ts",
-  "build": "tsc"
-},
+  "scripts": {
+    "start": "node dist/engine.js",
+    "dev": "npx tsx watch engine.ts",
+    "build": "tsc"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "dotenv": "^16.4.5",
