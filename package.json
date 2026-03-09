@@ -5,15 +5,16 @@
   "main": "engine.ts",
   "scripts": {
     "start": "tsx engine.ts",
-    "dev": "tsx watch engine.ts"
+    "dev": "tsx watch engine.ts",
+    "build": "echo 'No build step required for tsx execution'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "tsx": "^4.7.1"
   },
   "devDependencies": {
     "@types/node": "^25.3.5",
-    "tsx": "^4.7.1",
     "typescript": "^5.3.3"
   }
 }
