@@ -33,6 +33,24 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 const TICK_RATE_MS = 3000; // Engine ticks every 3 seconds
 const COUNTDOWN_SECONDS = 30; // 30 seconds wait before game starts
 
+const WINNING_PATTERNS = [
+    // Rows
+    [0, 1, 2, 3, 4],
+    [5, 6, 7, 8, 9],
+    [10, 11, 12, 13, 14],
+    [15, 16, 17, 18, 19],
+    [20, 21, 22, 23, 24],
+    // Columns
+    [0, 5, 10, 15, 20],
+    [1, 6, 11, 16, 21],
+    [2, 7, 12, 17, 22],
+    [3, 8, 13, 18, 23],
+    [4, 9, 14, 19, 24],
+    // Diagonals
+    [0, 6, 12, 18, 24],
+    [4, 8, 12, 16, 20],
+];
+
 async function runEngine() {
     console.log("🎱 Central Bingo Engine initialized... Starting engine loop.");
 
@@ -119,18 +137,8 @@ async function processPlayingRoom(room: any) {
 
     // 2. Check if the game has exhausted all 75 numbers
     if (calledArray.length >= 75) {
-        console.log(`Room ${room.id} exhausted all numbers. Closing room.`);
-        await supabase.from('rooms_engine').update({ status: 'finished', end_time: new Date().toISOString() }).eq('id', room.id);
-        
-        // Spawn a brand new waiting room
-        console.log("Spawning new room...");
-        const targetStartTime = new Date(Date.now() + (COUNTDOWN_SECONDS * 1000));
-        await supabase.from('rooms_engine').insert({
-            status: 'waiting',
-            pool: 0.00,
-            company_fee: 0.00,
-            start_time: targetStartTime.toISOString()
-        });
+        console.log(`Room ${room.id} exhausted all numbers. Closing without winner.`);
+        await finishAndReset(room.id);
         return;
     }
 
@@ -141,8 +149,68 @@ async function processPlayingRoom(room: any) {
 
     console.log(`Room [${room.id.substring(0,8)}...] Calls -> ${nextNumber}`);
 
-    // 4. Save to DB. Supabase Realtime picks this up and broadcasts!
-    await supabase.from('called_numbers').insert({ room_id: room.id, number: nextNumber });
+    // 4. Save to DB.
+    const { error: insErr } = await supabase.from('called_numbers').insert({ room_id: room.id, number: nextNumber });
+    if (insErr) return;
+
+    // 5. AUTOMATIC WINNER DETECTION
+    // Add the newly called number to our local set for checking
+    calledArray.push(nextNumber);
+    const calledSet = new Set(calledArray);
+
+    // Fetch all cards in this room
+    const { data: cards, error: cardsErr } = await supabase
+        .from('room_cards')
+        .select('*')
+        .eq('room_id', room.id);
+
+    if (cardsErr || !cards) return;
+
+    let winnerFound = false;
+    for (const card of cards) {
+        const isBingo = WINNING_PATTERNS.some(pattern => 
+            pattern.every(index => index === 12 || calledSet.has(card.card_numbers[index]))
+        );
+
+        if (isBingo) {
+            console.log(`🏆 WINNER DETECTED! Room: ${room.id}, Card: ${card.id}, User: ${card.user_id}`);
+            winnerFound = true;
+            
+            // Process the win (RPC handle payout, status changes, etc.)
+            const { error: winErr } = await supabase.rpc('process_bingo_win', {
+                p_room_id: room.id,
+                p_user_id: card.user_id,
+                p_card_id: card.id
+            });
+
+            if (winErr) {
+                console.error("Error processing winner RPC:", winErr.message);
+            }
+            break; // Stop checking after first winner in this tick
+        }
+    }
+
+    if (winnerFound) {
+        await finishAndReset(room.id);
+    }
+}
+
+async function finishAndReset(roomId: string) {
+    console.log(`Closing Room ${roomId} and starting a new round...`);
+    
+    // 1. Mark room as finished
+    await supabase.from('rooms_engine')
+        .update({ status: 'finished', end_time: new Date().toISOString() })
+        .eq('id', roomId);
+    
+    // 2. Spawn a brand new waiting room
+    const targetStartTime = new Date(Date.now() + (COUNTDOWN_SECONDS * 1000));
+    await supabase.from('rooms_engine').insert({
+        status: 'waiting',
+        pool: 0.00,
+        company_fee: 0.00,
+        start_time: targetStartTime.toISOString()
+    });
 }
 
 
