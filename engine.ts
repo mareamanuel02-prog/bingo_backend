@@ -32,6 +32,7 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 
 const TICK_RATE_MS = 3000; // Engine ticks every 3 seconds
 const COUNTDOWN_SECONDS = 30; // 30 seconds wait before game starts
+const MIN_PLAYERS = 3; // Minimum users required to start a game
 
 const WINNING_PATTERNS = [
     // Rows
@@ -88,7 +89,7 @@ async function tick() {
             status: 'waiting',
             pool: 0.00,
             company_fee: 0.00,
-            start_time: targetStartTime.toISOString()
+            start_time: null
         });
         return;
     }
@@ -104,20 +105,46 @@ async function tick() {
 }
 
 async function processWaitingRoom(room: any) {
-    // If start_time is null, initialize the timer
+    // --- CHECK PARTICIPANTS ---
+    const { data: participants, error: partErr } = await supabase
+        .from('room_cards')
+        .select('user_id')
+        .eq('room_id', room.id);
+
+    if (partErr) {
+        console.error("Error checking participants:", partErr.message);
+        return;
+    }
+
+    // Count unique users
+    const uniqueUsers = new Set(participants?.map((p: { user_id: string }) => p.user_id)).size;
+
+    // If start_time is null, we are WAITING for enough players to trigger the countdown
     if (!room.start_time) {
-        const targetStartTime = new Date(Date.now() + (COUNTDOWN_SECONDS * 1000));
-        await supabase.from('rooms_engine').update({ start_time: targetStartTime.toISOString() }).eq('id', room.id);
+        if (uniqueUsers >= MIN_PLAYERS) {
+            console.log(`Bingo Room ${room.id} now has ${uniqueUsers} players. STARTING COUNTDOWN.`);
+            const targetStartTime = new Date(Date.now() + (COUNTDOWN_SECONDS * 1000));
+            await supabase.from('rooms_engine').update({ start_time: targetStartTime.toISOString() }).eq('id', room.id);
+        } else {
+            // Just wait, no start_time yet
+        }
         return;
     }
 
     const now = new Date();
     const startTime = new Date(room.start_time);
 
-    // If countdown is finished, Start the Game
+    // If countdown is already running and finished
     if (now >= startTime) {
-        console.log(`Bingo Room ${room.id} is STARTING.`);
-        await supabase.from('rooms_engine').update({ status: 'playing' }).eq('id', room.id);
+        // One final check - did someone leave? (Unlikely with buy logic but safe to check)
+        if (uniqueUsers >= MIN_PLAYERS) {
+            console.log(`Bingo Room ${room.id} countdown ended. STARTING GAME.`);
+            await supabase.from('rooms_engine').update({ status: 'playing' }).eq('id', room.id);
+        } else {
+            // Players dropped below limit during countdown, reset start_time to null to wait again
+            console.log(`Room ${room.id} lost players during countdown. Resetting to wait...`);
+            await supabase.from('rooms_engine').update({ start_time: null }).eq('id', room.id);
+        }
     }
 }
 
@@ -203,13 +230,12 @@ async function finishAndReset(roomId: string) {
         .update({ status: 'finished', end_time: new Date().toISOString() })
         .eq('id', roomId);
     
-    // 2. Spawn a brand new waiting room
-    const targetStartTime = new Date(Date.now() + (COUNTDOWN_SECONDS * 1000));
+    // 2. Spawn a brand new waiting room (NO start_time yet)
     await supabase.from('rooms_engine').insert({
         status: 'waiting',
         pool: 0.00,
         company_fee: 0.00,
-        start_time: targetStartTime.toISOString()
+        start_time: null
     });
 }
 
