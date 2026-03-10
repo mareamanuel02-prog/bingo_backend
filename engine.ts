@@ -31,7 +31,7 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 });
 
 const TICK_RATE_MS = 3000; // Engine ticks every 3 seconds
-const COUNTDOWN_SECONDS = 30; // 30 seconds wait before game starts
+const COUNTDOWN_SECONDS = 7; // 7 seconds wait before game starts
 const MIN_PLAYERS = 2; // Minimum users required to start a game
 
 const WINNING_PATTERNS = [
@@ -226,17 +226,11 @@ async function finishAndReset(roomId: string) {
     console.log(`Closing Room ${roomId} and starting a new round...`);
     
     // 1. Mark room as finished
+    // The safety net in tick() will automatically spawn the next room 
+    // as soon as no 'waiting' or 'playing' rooms are found.
     await supabase.from('rooms_engine')
         .update({ status: 'finished', end_time: new Date().toISOString() })
         .eq('id', roomId);
-    
-    // 2. Spawn a brand new waiting room (NO start_time yet)
-    await supabase.from('rooms_engine').insert({
-        status: 'waiting',
-        pool: 0.00,
-        company_fee: 0.00,
-        start_time: null
-    });
 }
 
 
