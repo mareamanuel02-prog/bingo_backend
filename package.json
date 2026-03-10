@@ -2,8 +2,8 @@
   "name": "bingo-engine",
   "version": "1.0.0",
   "scripts": {
-    "start": "npx tsx engine.ts",
-    "dev": "npx tsx watch engine.ts",
+    "start": "./node_modules/.bin/tsx engine.ts",
+    "dev": "./node_modules/.bin/tsx watch engine.ts",
     "build": "echo 'No build step required for tsx direct execution'"
   },
   "dependencies": {
